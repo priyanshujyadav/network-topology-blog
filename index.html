@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Network Topologies</title>
+  <style>
+    :root{
+      --bg:#f4fbff; --card:#fff; --accent:#0d47a1; --muted:#556;
+      --shadow: 0 6px 18px rgba(13,71,161,0.08);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#eaf6ff 60%);color:#123;padding:24px;display:flex;flex-direction:column;gap:18px;align-items:center}
+    header{width:100%;max-width:1100px}
+    .hero{background:var(--card);border-radius:12px;padding:18px 22px;box-shadow:var(--shadow);display:flex;gap:16px;align-items:center}
+    .logo{width:72px;height:72px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,var(--accent),#1976d2);color:white;font-weight:700;font-size:20px}
+    main{width:100%;max-width:1100px;display:grid;grid-template-columns:1fr 420px;gap:18px;align-items:start}
+    .panel{background:var(--card);border-radius:12px;padding:18px;box-shadow:var(--shadow);width:100%}
+    .topologies{display:flex;flex-direction:column;gap:12px}
+    .topo-card{display:flex;gap:12px;align-items:center;border-radius:10px;padding:12px;border:1px solid rgba(13,71,161,0.06);cursor:pointer;transition:transform .18s ease, background .18s}
+    .topo-card:hover{transform:translateY(-4px);background:#f0f8ff}
+    .topo-thumb{width:140px;height:96px;flex:0 0 140px;display:grid;place-items:center;background:linear-gradient(180deg,#fff,#eef9ff);border-radius:8px;border:1px solid rgba(13,71,161,0.04);overflow:hidden}
+    .topo-thumb img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+    .topo-info{flex:1}
+    .topo-info h3{margin:0;color:var(--accent)}
+    .tag{display:inline-block;padding:4px 8px;border-radius:8px;background:#e8f3ff;color:var(--accent);font-size:12px;margin-top:8px}
+    aside{position:sticky;top:24px}
+    .details{width:100%;background:var(--card);padding:16px;border-radius:12px;box-shadow:var(--shadow)}
+    .meta{font-size:13px;color:var(--muted);margin-bottom:8px}
+    .diagram{background:linear-gradient(180deg,#fff,#f7fdff);border-radius:10px;padding:12px;border:1px solid rgba(13,71,161,0.04);box-shadow:0 8px 24px rgba(2,48,71,0.03)}
+    .missing-box{display:grid;place-items:center;color:#888;padding:8px;text-align:center}
+    @media (max-width:980px){main{grid-template-columns:1fr}aside{position:static}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="hero">
+      <div class="logo">DCN</div>
+      <div>
+        <h1>Network Topologies</h1>
+<p>A network topology is the arrangement of devices (nodes) and connections (links) in a computer network. It shows how computers, servers, and other devices are connected and how data flows between them. There are two main types of topology:
+<p/><p>
+Physical Topology: The actual physical layout of cables and devices.</p><p>
+Logical Topology: How data moves across the network, regardless of physical layout.</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div style="margin-bottom:12px; display:flex; gap:8px; align-items:center; justify-content:space-between">
+        <input id="search" type="search" placeholder="Search topology (e.g. Ring, Mesh)" style="width:260px;padding:8px;border-radius:8px;border:1px solid rgba(13,71,161,0.08)">
+        <small style="color:var(--muted)">Local images use file:/// paths — edit below if your folder differs</small>
+      </div>
+
+      <div class="topologies" id="topoList" aria-live="polite"></div>
+
+      <div class="diagram" style="margin-top:14px">
+        <h3 style="margin:0 0 8px 0">Comparison Matrix — Expanded</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr><th style="background:#f1f8ff;color:var(--accent);padding:8px">Topology</th><th style="padding:8px">Scalability</th><th style="padding:8px">Cost</th><th style="padding:8px">Fault Tolerance</th><th style="padding:8px">Typical Use-cases</th></tr></thead>
+          <tbody>
+            <tr><td style="padding:8px">Bus</td><td style="padding:8px">Low</td><td style="padding:8px">Low</td><td style="padding:8px">Low</td><td style="padding:8px">Small legacy LANs, demos</td></tr>
+            <tr><td style="padding:8px">Star</td><td style="padding:8px">Medium</td><td style="padding:8px">Medium</td><td style="padding:8px">High</td><td style="padding:8px">Ethernet LANs</td></tr>
+            <tr><td style="padding:8px">Ring</td><td style="padding:8px">Medium</td><td style="padding:8px">Low</td><td style="padding:8px">Medium</td><td style="padding:8px">Token-ring / MAN</td></tr>
+            <tr><td style="padding:8px">Mesh</td><td style="padding:8px">High</td><td style="padding:8px">High</td><td style="padding:8px">Very High</td><td style="padding:8px">Data center / WAN</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside>
+      <div class="details" id="detailsPanel" aria-live="polite">
+        <div id="detailsContent"><p style="color:var(--muted)">Select a topology to view details.</p></div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const topologies = [
+      {
+        id: 'bus',
+        name: 'Bus Topology',
+        tagline: 'Single shared backbone',
+        devices: ['Coax cable','Terminators','NICs'],
+        
+        pros: [
+          'If N devices are connected to each other in a bus topology, then only one backbone cable is required, and N drop lines are required.',
+          'Coaxial or twisted pair cables support up to 10 Mbps.',
+          'Cable cost is lower and ideal for small networks.',
+          'Simple installation and troubleshooting.',
+          'CSMA is the most common method used.'
+        ],
+        
+        cons: [
+          'Requires a lot of cabling.',
+          'If the backbone fails, the whole network crashes.',
+          'Collisions increase with heavy traffic.',
+          'Adding devices slows the network.',
+          'Security is low.'
+        ],
+
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Bus-Topology.jpg.png'
+      },
+
+      {
+        id: 'star',
+        name: 'Star Topology',
+        tagline: 'Central hub connects all nodes',
+        devices: ['Switch','Hub','Wireless AP'],
+        pros: [
+          'Easy setup — requires N cables for N devices.',
+          'Only one port needed per device.',
+          'Robust — link failures don’t affect others.',
+          'Easy troubleshooting.',
+          'Uses inexpensive coaxial cable.'
+        ],
+        cons: [
+          'If hub fails, whole network fails.',
+          'Higher installation cost.',
+          'Performance depends entirely on the hub.'
+        ],
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Star-Topology.jpg.png'
+      },
+
+      {
+        id: 'ring',
+        name: 'Ring Topology',
+        tagline: 'Each node connected to two neighbors',
+        devices: ['MAU','Docking ports','NICs'],
+
+        pros: [
+          'High-speed data transmission.',
+          'Minimal chances of collision.',
+          'Cheap to install and expand.'
+        ],
+
+        cons: [
+          'Failure of one node can fail the network.',
+          'Troubleshooting is difficult.',
+          'Less secure.'
+        ],
+
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Ring-Topology.jpg.png'
+      },
+
+      {
+        id: 'mesh',
+        name: 'Mesh Topology',
+        tagline: 'Many interconnections between nodes',
+        devices: ['Routers','Switches','Multiple links'],
+        pros: [
+          'Very fast communication.',
+          'Highly robust.',
+          'Easy fault detection.',
+          'High security.'
+        ],
+        cons: [
+          'Very expensive due to cabling.',
+          'Complex installation.',
+          'High maintenance cost.'
+        ],
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Mesh-Topology.jpg.png'
+      },
+
+      {
+        id: 'tree',
+        name: 'Tree Topology',
+        tagline: 'Hierarchical layered structure',
+        devices: ['Routers','Switches','Bridges'],
+
+        pros: [
+          'Allows more devices to attach to the central hub.',
+          'Supports network isolation and prioritization.',
+          'New devices can be added easily.'
+        ],
+
+        cons: [
+          'If central hub fails, entire network fails.',
+          'Cabling cost is high.',
+          'Reconfiguration is difficult when adding devices.'
+        ],
+
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Tree-topology.jpg.png'
+      },
+
+      {
+        id: 'hybrid',
+        name: 'Hybrid Topology',
+        tagline: 'Combination of multiple topologies',
+        devices: ['Routers','Switches','Bridges'],
+
+        pros: [
+          'This topology is very flexible.',
+          'The size of the network can be easily expanded by adding new devices.'
+        ],
+
+        cons: [
+          'It is challenging to design the architecture of the hybrid network.',
+          'Hubs used in this topology are very expensive.',
+          'The infrastructure cost is very high due to cabling and devices.'
+        ],
+
+        img: 'file:///C:/Users/priya/Downloads/IMAGES/Hybrid-Topology.jpg.png'
+      }
+    ];
+
+    const listEl = document.getElementById('topoList');
+    const details = document.getElementById('detailsContent');
+
+    function createTopoCard(t) {
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'topo-card';
+      el.innerHTML = `
+        <div class="topo-thumb">
+          <img src="${t.img}" alt="${t.name}">
+        </div>
+        <div class="topo-info">
+          <h3>${t.name}</h3>
+          <div style="color:var(--muted);font-size:13px">${t.tagline}</div>
+          <div class="tag">Devices: ${t.devices.join(', ')}</div>
+        </div>
+      `;
+      const img = el.querySelector('img');
+      img.onerror = () => {
+        const thumb = el.querySelector('.topo-thumb');
+        thumb.innerHTML = `<div class="missing-box">Image missing<br><small>${t.img}</small></div>`;
+      };
+      el.addEventListener('click', () => showDetails(t.id));
+      return el;
+    }
+
+    function renderList(filter = '') {
+      listEl.innerHTML = '';
+      topologies
+        .filter(x => x.name.toLowerCase().includes(filter.toLowerCase()) || x.id.includes(filter.toLowerCase()))
+        .forEach(t => listEl.appendChild(createTopoCard(t)));
+      if(listEl.children.length === 0)
+        listEl.innerHTML = '<div style="padding:14px;color:var(--muted)">No topologies found.</div>';
+    }
+
+    function showDetails(id) {
+      const t = topologies.find(x => x.id === id);
+      if(!t) return;
+
+      let html = `
+        <h3 style="margin:0">${t.name}</h3>
+        <div class="meta">${t.tagline}</div>
+        <div style="margin:10px 0">
+          <img id="bigImg" src="${t.img}" alt="${t.name}" style="width:100%; border-radius:10px; border:1px solid #e5f2ff;">
+        </div>
+      `;
+
+      if(t.id === 'bus'){
+        html += `
+          <p>Bus Topology is a network type in which every computer and network device is connected to a single cable. It is bi-directional. It is a multi-point connection and a non-robust topology because if the backbone fails the topology crashes. In Bus Topology, various MAC (Media Access Control) protocols are followed by LAN ethernet connections like TDMA, Pure Aloha, CDMA, Slotted Aloha, etc.</p>
+        `;
+      }
+
+      if(t.id === 'ring'){
+        html += `
+          <p>In a Ring Topology, it forms a ring connecting devices with exactly two neighboring devices. A number of repeaters are used for Ring topology with a large number of nodes, because if someone wants to send some data to the last node in the ring topology with 100 nodes, then the data will have to pass through 99 nodes to reach the 100th node. Hence to prevent data loss repeaters are used in the network.
+
+In-Ring Topology, the Token Ring Passing protocol is used by the workstations to transmit the data where, Token passing is a network access method in which a token is passed from one node to another node & Token is a frame that circulates around the network.</p>
+        `;
+      }
+
+      if(t.id === 'mesh'){
+        html += `
+          <p>In a mesh topology, every device is connected to another device via a particular channel. Every device is connected to another via dedicated channels. These channels are known as links. In Mesh Topology, the protocols used are AHCP (Ad Hoc Configuration Protocols), DHCP (Dynamic Host Configuration Protocol), etc.Suppose, the N number of devices are connected with each other in a mesh topology, the total number of ports that are required by each device is 
+N
+−
+1
+N−1. In Figure , there are 6 devices connected to each other, hence the total number of ports required by each device is 5. The total number of ports required 
+= N * (N-1)
+= N * (N-1).
+Suppose, N number of devices are connected with each other in a mesh topology, then the total number of dedicated links required to connect them is 
+N
+C
+2
+N
+ C 
+2
+​
+  i.e. 
+N * (N-1)/2
+N * (N-1)/2. In Figure, there are 6 devices connected to each other, hence the total number of links required is 
+6 * 5/2 = 15
+6 * 5/2 = 15.</p>
+        `;
+      }
+
+      if(t.id === 'star'){
+        html += `
+          <p>In Star Topology, all the devices are connected to a single hub through a cable. This hub is the central node and all other nodes are connected to the central node. The hub can be passive in nature i.e., not an intelligent hub such as broadcasting devices, at the same time the hub can be intelligent known as an active hub. Active hubs have repeaters in them.</p>
+        `;
+      }
+
+      if(t.id === 'tree'){
+        html += `
+          <p>Tree topology is the variation of the Star topology. This topology has a hierarchical flow of data. In Tree Topology, protocols like DHCP and SAC (Standard Automatic Configuration) are used.
+
+Here, various secondary hubs are connected to the central hub which contains the repeater.
+This data flow from top to bottom i.e. from the central hub to the secondary and then to the devices or from bottom to top i.e. devices to the secondary hub and then to the central hub. 
+It is a multi-point connection and a non-robust topology because if the backbone fails the topology crashes.</p>
+        `;
+      }
+
+      if(t.id === 'hybrid'){
+        html += `
+          <p>Hybrid Topology is the combination of all the various types of topologies we have studied above. Hybrid Topology is used when the nodes are free to take any form. It means these can be individuals such as Ring or Star topology or can be a combination of various types of topologies seen above. Each individual topology uses the protocol that has been discussed earlier.</p>
+        `;
+      }
+
+      html += `
+        <strong>Devices / Tech:</strong> <span style="color:var(--muted)">${t.devices.join(', ')}</span>
+        <div style="margin-top:10px">
+          <strong>Advantages</strong>
+          <ul>${t.pros.map(p => `<li>${p}</li>`).join('')}</ul>
+
+          <strong>Disadvantages</strong>
+          <ul>${t.cons.map(c => `<li>${c}</li>`).join('')}</ul>
+        </div>
+      `;
+
+      details.innerHTML = html;
+
+      const big = document.getElementById('bigImg');
+      big.onerror = () => {
+        const wrap = big.parentElement;
+        wrap.innerHTML = `<div class="missing-box">Large image missing<br><small>${t.img}</small></div>`;
+      };
+    }
+
+    document.getElementById('search').addEventListener('input', e => renderList(e.target.value));
+    renderList();
+  </script>
+</body>
+</html>
